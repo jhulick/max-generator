@@ -1,0 +1,211 @@
+#!/usr/bin/env node
+
+/*
+ * Module dependencies.
+ */
+
+var spawn = require('child_process').spawn;
+var join = require('path').join;
+var resolve = require('path').resolve;
+var pkg = require('../package.json');
+var version = pkg.version;
+var colors = require('colors');
+var utils = require('../lib/utils');
+var readdir = require('fs').readdirSync;
+var exists = require('fs').existsSync;
+var info = utils.info;
+var log = utils.log;
+var error = utils.error;
+var root = process.cwd();
+var bootstrapper = require('../lib/bootstrapper');
+var args = process.argv.splice(2);
+var endWithOk = false;
+
+if(args[0] === '-v' || args[0] === '--version') {
+  console.log(version);
+  process.exit(0);
+}
+
+args.forEach(function (a) {
+  if(a === '--verbose') {
+    utils.verbose = true;
+    args.splice(args.indexOf(a),1);
+  }
+});
+
+// setup process end message
+process.on('exit', function (code) {
+  if(code===0) {
+    endWithOk && log("OK".green.bold);
+  } else {
+    error("NOT OK".red.bold);
+  }
+});
+
+process.abort = function (message) {
+  message && error(message);
+  process.exit(1);
+}
+
+// get plugins
+var bins = readdir(__dirname).filter(function (bin) {
+  return /^mgen-/.test(bin);
+});
+
+info('Found plugins:');
+info();
+bins = bins.map(function (bin) {
+  info('        *',bin);
+  return bin.replace('mgen-','');
+});
+info();
+
+var templates = readdir(resolve(__dirname,'../lib/templates'))
+  .map(function (t) {
+    if(/^\./.test(t) || /index/.test(t) || /component/.test(t)) return;
+    t = t.split('.')
+    t.pop();
+    t = t.join('.');
+    return t;
+  })
+  .filter(function (t) {
+    return !!t;
+  });
+
+var generators = bins.filter(function (bin) {
+  if(templates.indexOf(bin) === -1) return;
+  return bin;
+});
+
+if(args[0] === '-h' || args[0] === '--help' || !args.length) {
+  help();
+  process.exit(0);
+}
+
+info('mgen invoked with parameters:');
+info();
+args.forEach(function (param) {
+  info('        *', param);
+});
+info();
+
+log("It works if it ends with OK");
+endWithOk = true;
+
+if(!args.length) {
+  log('Starting new app at', root);
+  bootstrapper.start(root);
+} else {
+  var command = args[0];
+  var generator = args[1];
+  var modulePath = join(root,'modules',args[0]);
+
+  var isModule = exists(modulePath);
+  var isCommand = bins.indexOf(command) !== -1;
+  var isGenerator = generators.indexOf(generator) !== -1;
+
+  info('isModule', isModule);
+  info('isCommand', isCommand);
+  info('isGenerator', isGenerator);
+
+  if(isModule) {
+    process.chdir(modulePath);
+
+    var moduleName = args.shift();
+
+    if(isGenerator) {
+      generator = args.shift();
+    } else {
+      generator = 'scaffolder';
+    }
+    info("Invoking", generator, "with", args, "inside", moduleName);
+  
+    spawn('mgen-'+generator, args, { stdio: 'inherit' })
+      .on('exit', exitLoudly);
+
+  } else if(isCommand) {
+
+    // loose the command from the args
+    args.splice(0,1);
+    info("Invoking", command, "with", args);
+
+    spawn('mgen-'+command, args, { stdio: 'inherit' })
+      .on('exit', exitLoudly);
+
+  } else {
+
+    var path = args.shift() || '.';
+    path = join(root, path);
+    log('Starting new app at', path);
+    bootstrapper.start(path);
+
+  }
+}
+
+function help () {
+  log("mgen – a minimalistic, modular angular.js app generator");
+  log("see it on github – https://github.com/mgen/mgen");
+  log();
+  log("Usage:");
+  log();
+  log("  $ mgen <app-name-or-path>");
+  log();
+  log("    Create a folder <app-name> and start a new application inside.");
+  log("    If a <path> is specified then it will start it in such path");
+  log("    and the application name will be the name of the last directory.");
+  log();
+  log();
+  log("  $ mgen module [options] <module-name>");
+  log();
+  log("    Scaffold a new module named <module-name>.");
+  log();
+  log();
+  log("Using Generators:");
+  log();
+  log("  $ mgen <module-name> [generator] [options] [params [, more params]]");
+  log();
+  log("    It will use one of the following generators within the specified");
+  log("    module named <module-name>.");
+  log();
+  log("List of Generators:");
+  log();
+  templates.forEach(function (template) {
+    var usesScaffolder = generators.indexOf(template) === -1;
+    log("    *", template, (usesScaffolder) ? '– using scaffolder' : '');
+  });
+  log();
+  log("Using Plugins: (generators are plugins, too)");
+  log();
+  log("  $ mgen <plugin-name> [params [, more params]]");
+  log();
+  log("List of Plugins:");
+  log();
+  bins.forEach(function (bin) {
+    log("    *", bin);
+  });
+  log();
+  log();
+  log("Examples:");
+  log();
+  log("   $ mgen myApp")
+  log();
+  log("     creates a folder named myApp in the current directory and");
+  log("     an app named myApp in it");
+  log();
+  log("   $ mgen module login")
+  log();
+  log("     creates a module named login inside a current app");
+  log();
+  log("   $ mgen server 2112")
+  log();
+  log("     runs a local server on port 2112");
+  log();
+  log();
+  log("For additional help on any plugin, call it with --help, like this:");
+  log("   $ mgen <plugin-name> --help");
+  log()
+}
+
+function exitLoudly (code) {
+  code !== 0 && process.abort();
+}

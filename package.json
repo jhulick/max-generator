@@ -1,0 +1,46 @@
+{
+  "name": "mgen",
+  "version": "0.1.0",
+  "description": "minimalistic modular max-paas angular.js app generator",
+  "main": "index",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jhulick/max-generator.git"
+  },
+  "keywords": [
+    "minimalistic",
+    "angular",
+    "angular.js",
+    "angularjs",
+    "modular",
+    "app",
+    "generator",
+    "mgen"
+  ],
+  "author": "Jeremy Hulick <jeremy.hulick@github..com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jhulick/max-generator/issues"
+  },
+  "dependencies": {
+    "commander": "~2.0.0",
+    "colors": "~0.6.2",
+    "lodash": "~2.0.0",
+    "underscore.string": "~2.3.3",
+    "mkdirp": "~0.3.5",
+    "connect": "~2.11.1",
+    "tail-array": "0.0.1",
+    "string-to-js": "0.0.1"
+  },
+  "peerDependencies": {
+    "component": "*"
+  },
+  "bin": {
+    "mgen": "./bin/mgen",
+    "mgen-scaffolder": "./bin/mgen-scaffolder",
+    "mgen-module": "./bin/mgen-module",
+    "mgen-controller": "./bin/mgen-controller",
+    "mgen-server": "./bin/mgen-server",
+    "mgen-html2js": "./bin/mgen-html2js"
+  }
+}

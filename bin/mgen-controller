@@ -1,0 +1,56 @@
+#!/usr/bin/env node
+
+/**
+ *  Module dependencies.
+ */
+
+var cli = require('commander');
+var path = require('path');
+var pkg = require('../package.json');
+var version = pkg.version;
+var colors = require('colors');
+var utils = require('../lib/utils');
+var log = utils.log;
+var info = utils.info;
+var error = utils.error;
+var unique = require('lodash').unique;
+var scaffold = require('../lib/scaffolder').scaffold;
+var args = [].concat(process.argv).splice(2);
+
+if(args[0] === '-h' || args[0] === '--help') {
+  help();
+  process.exit(0);
+}
+
+/*
+ * cli
+ */
+
+cli
+  .version(version)
+
+cli.parse(process.argv);
+
+if (!cli.args.length) help();
+
+cli.args.forEach(function (name) {
+  var moduleName = process.cwd().split(path.sep).pop();
+  scaffold(moduleName, 'controller', name);
+  scaffold(moduleName, 'test.unit.controller', name);
+});
+
+function help () {
+  var logCommand = function (command, description) {
+    var tabs = '  ';
+    log(tabs, '$', command);
+    log(tabs, tabs, description);
+    log();
+  }
+  log('Usage:');
+  log('');
+  logCommand('mgen-controller', 'Shows this help.');
+  logCommand('mgen-controller navbar', 'Creates the navbar controller');
+  logCommand('mgen-controller navbar dropdowns another'
+    , 'Creates the 3 controllers: navbar, dropdowns, and another');
+  process.exit(0);
+};
