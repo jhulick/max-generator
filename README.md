@@ -1,4 +1,5 @@
-# max-generator – minimalistic, modular angular.js app generator
+# max-generator
+minimalistic, modular angular.js app generator
 
 ### Motivation
 
