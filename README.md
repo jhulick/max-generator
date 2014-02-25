@@ -14,7 +14,7 @@ minimalistic, modular angular.js app generator
 It's the rough equivalent to rails generators (far less sophisticated yet, but we'll get there eventually) that uses a package manager (component) similar to npm (in some ways), and lets you use a synchronous require call (thus no more ugly AMD/UMD definitions and such).
 
 ## Installation 
-As a regular node cli tool, you can install this with `npm --global install mgen`. It requires `component` as a `peerDep`.
+As a regular node cli tool, you can install this with `npm --global install` from the cloned directory. It requires `component` as a `peerDep`.
 
 ## Getting started
 
